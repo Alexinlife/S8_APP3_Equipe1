@@ -6,7 +6,7 @@ on:
   push:
     branches: [ $default-branch ]
   schedule:
-    - cron: $cron-weekly
+    - cron: "0 8 * * 1" # weekly check
 
 permissions:
   contents: read
