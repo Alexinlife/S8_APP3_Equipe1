@@ -29,11 +29,6 @@ jobs:
           results_file: results.sarif
           results_format: sarif
 
-      - name: Show Score
-        run: |
-          score=$(jq '.score' results.json)
-          echo "Score is: $score"
-
       - name: Upload artifact (scorecard results)
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
