@@ -52,7 +52,7 @@ jobs:
       - name: Create artifact
         run: |
           mkdir -p out
-          cp -r public/* out/ || true
+          cp -r public/* out/
           tar czf artifact.tar.gz -C out .
 
       - name: Upload artifact
