@@ -67,6 +67,8 @@ jobs:
           path: artifact.tar.gz
 
   deploy:
+    permissions:
+      contents: write
     needs: build-and-test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
