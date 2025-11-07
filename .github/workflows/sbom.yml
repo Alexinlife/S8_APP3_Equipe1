@@ -3,8 +3,6 @@ name: Build SBOM
 on:
   push:
     branches: ["main"]
-  pull_request:
-    branches: ["main"]
 
 permissions:
   actions: none
