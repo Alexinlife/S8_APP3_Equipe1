@@ -39,7 +39,7 @@ jobs:
         run: npm ci
 
       - name: Install CycloneDX
-        run: npm install -g @cyclonedx/cyclonedx-node-module
+        run: npm install -g @cyclonedx/cyclonedx-npm
 
       - name: Generate SBOM
         run: cyclonedx --input-dir . --output ${{ env.SBOM_OUTPUT_DIR }}/bom.json --output-format json
