@@ -1,8 +1,8 @@
 {
-  "generatedAt": 1762409520293,
+  "generatedAt": 1762541669399,
   "internalDependency": {
     "name": "@lab/super_legit_dependency",
-    "installedValue": "EVIL"
+    "installedValue": "CLEAN"
   },
   "externalDependency": {
     "name": "lodash",
@@ -11,5 +11,5 @@
     "status": "Up to date"
   },
   "summaryExternal": "External dependency: Up to date",
-  "summary": "EVIL | External dependency: Up to date"
+  "summary": "CLEAN | External dependency: Up to date"
 }
